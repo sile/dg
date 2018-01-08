@@ -25,7 +25,7 @@ fn subcommand_watch() -> App<'static, 'static> {
 fn handle_watch(matches: &ArgMatches) {
     let dir = matches.value_of("DIR").unwrap();
     let mut watcher = track_try_unwrap!(watch::fs::FileSystemWatcher::new());
-    track_try_unwrap!(watcher.add_path(dir));
+    watcher.add_path(dir);
     loop {
         if let Async::Ready(Some(event)) = track_try_unwrap!(watcher.poll()) {
             println!("TODO: {:?}", event);
