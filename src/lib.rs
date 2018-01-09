@@ -1,4 +1,5 @@
 extern crate fibers;
+extern crate fibers_tasque;
 extern crate futures;
 extern crate inotify;
 #[macro_use]

@@ -97,7 +97,7 @@ impl InotifyService {
         event_tx: mpsc::Sender<Event>,
     ) -> Result<WatchDescriptor> {
         track_assert!(
-            !mask.contains(
+            !mask.intersects(
                 WatchMask::DONT_FOLLOW | WatchMask::EXCL_UNLINK | WatchMask::MASK_ADD
                     | WatchMask::ONESHOT | WatchMask::ONLYDIR,
             ),
@@ -138,7 +138,9 @@ impl InotifyService {
                 // Updating `EventMask` by calling `Inotify::add_watch` has a risk of
                 // causing inconsistency when the inode referred by the path changes,
                 // so only deletes when all watches are gone.
-                track!(self.inotify.rm_watch(watch.raw_wd).map_err(Error::from))?;
+                if let Err(e) = track!(self.inotify.rm_watch(watch.raw_wd).map_err(Error::from)) {
+                    println!("[ERROR] {}", e);
+                }
             }
         }
         Ok(())
@@ -246,7 +248,9 @@ struct Watch {
 }
 impl Watch {
     fn notify(&self, event: &RawEvent) {
-        let mask = EventMask::from_bits_truncate(event.mask.bits() & self.mask.bits());
+        let ext_mask = EventMask::ISDIR | EventMask::IGNORED | EventMask::Q_OVERFLOW;
+        let mask =
+            EventMask::from_bits_truncate(event.mask.bits() & (self.mask.bits() | ext_mask.bits()));
         if !mask.is_empty() {
             let event = Event {
                 mask,

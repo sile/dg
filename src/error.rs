@@ -1,6 +1,8 @@
+use std;
 use std::io;
-use std::sync::mpsc::RecvError;
+use std::sync::mpsc::{RecvError, SendError};
 use fibers::sync::oneshot::MonitorError;
+use fibers_tasque;
 use trackable::error::TrackableError;
 use trackable::error::{ErrorKind as TrackableErrorKind, ErrorKindExt};
 
@@ -11,6 +13,11 @@ derive_traits_for_trackable_error_newtype!(Error, ErrorKind);
 impl From<io::Error> for Error {
     fn from(f: io::Error) -> Self {
         ErrorKind::Other.cause(f).into()
+    }
+}
+impl From<std::string::FromUtf8Error> for Error {
+    fn from(f: std::string::FromUtf8Error) -> Self {
+        ErrorKind::InvalidInput.cause(f).into()
     }
 }
 impl From<MonitorError<Error>> for Error {
@@ -24,6 +31,16 @@ impl From<MonitorError<Error>> for Error {
 }
 impl From<RecvError> for Error {
     fn from(f: RecvError) -> Self {
+        ErrorKind::Other.cause(f).into()
+    }
+}
+impl<T: Send + Sync + 'static> From<SendError<T>> for Error {
+    fn from(f: SendError<T>) -> Self {
+        ErrorKind::Other.cause(f).into()
+    }
+}
+impl From<fibers_tasque::AsyncCallError> for Error {
+    fn from(f: fibers_tasque::AsyncCallError) -> Self {
         ErrorKind::Other.cause(f).into()
     }
 }
