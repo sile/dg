@@ -2,6 +2,7 @@ use std;
 use std::io;
 use std::sync::mpsc::{RecvError, SendError};
 use fibers::sync::oneshot::MonitorError;
+use fibers_inotify;
 use fibers_tasque;
 use trackable::error::TrackableError;
 use trackable::error::{ErrorKind as TrackableErrorKind, ErrorKindExt};
@@ -42,6 +43,17 @@ impl<T: Send + Sync + 'static> From<SendError<T>> for Error {
 impl From<fibers_tasque::AsyncCallError> for Error {
     fn from(f: fibers_tasque::AsyncCallError) -> Self {
         ErrorKind::Other.cause(f).into()
+    }
+}
+impl From<fibers_inotify::Error> for Error {
+    fn from(f: fibers_inotify::Error) -> Self {
+        let kind = match *f.kind() {
+            fibers_inotify::ErrorKind::InvalidInput => ErrorKind::InvalidInput,
+            fibers_inotify::ErrorKind::ResourceShortage | fibers_inotify::ErrorKind::Other => {
+                ErrorKind::Other
+            }
+        };
+        kind.cause(f).into()
     }
 }
 

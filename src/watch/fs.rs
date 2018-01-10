@@ -4,41 +4,41 @@ use std::fs::DirEntry;
 use std::path::{Path, PathBuf};
 use fibers::{BoxSpawn, Spawn};
 use fibers::sync::mpsc;
+use fibers_inotify::{InotifyEvent, InotifyService, Watcher, WatcherEvent};
 use fibers_tasque::{AsyncCall, DefaultIoTaskQueue, TaskQueueExt};
 use futures::{Async, Future, Poll, Stream};
 use futures::future::Fuse;
 use inotify::{EventMask, WatchMask};
 
 use {Error, ErrorKind, Result};
-use inotify_service::{Event as InotifyEvent, InotifyService, InotifyServiceHandle, WatchHandle};
 use watch::file::{FileEvent, WatchedFile};
 
 #[derive(Debug)]
 pub struct FileSystemWatcher {
     spawner: BoxSpawn,
-    inotify: InotifyServiceHandle,
+    inotify_service: InotifyService,
     dir_event_rx: mpsc::Receiver<DirectoryEvent>,
     dir_event_tx: mpsc::Sender<DirectoryEvent>,
     watched_files: HashMap<PathBuf, mpsc::Sender<FileEvent>>,
 }
 impl FileSystemWatcher {
-    pub fn new<S>(spawner: S) -> Result<Self>
+    pub fn new<S>(spawner: S) -> Self
     where
         S: Spawn + Send + 'static,
     {
-        let inotify = track!(InotifyService::start())?;
+        let inotify_service = InotifyService::new();
         let (dir_event_tx, dir_event_rx) = mpsc::channel();
-        Ok(FileSystemWatcher {
+        FileSystemWatcher {
             spawner: spawner.boxed(),
-            inotify,
+            inotify_service,
             dir_event_rx,
             dir_event_tx,
             watched_files: HashMap::new(),
-        })
+        }
     }
     pub fn watch<P: AsRef<Path>>(&mut self, root_dir: P) -> Result<()> {
         let root_dir = root_dir.as_ref().to_path_buf();
-        let watcher = track!(DirectoryWatcher::new(&self.inotify, &root_dir))?;
+        let watcher = track!(DirectoryWatcher::new(&self.inotify_service, &root_dir))?;
         println!("[DEBUG] watch: {:?}", root_dir);
 
         let tx0 = self.dir_event_tx.clone();
@@ -94,6 +94,7 @@ impl Stream for FileSystemWatcher {
     type Item = WatchedFile;
     type Error = Error;
     fn poll(&mut self) -> Poll<Option<Self::Item>, Self::Error> {
+        track!(self.inotify_service.poll().map_err(Error::from))?;
         while let Async::Ready(Some(dir_event)) = self.dir_event_rx.poll().expect("Never fails") {
             if let Some(file) = self.handle_dir_event(dir_event) {
                 return Ok(Async::Ready(Some(file)));
@@ -106,11 +107,11 @@ impl Stream for FileSystemWatcher {
 #[derive(Debug)]
 struct DirectoryWatcher {
     path: PathBuf,
-    watch: WatchHandle,
+    watcher: Watcher,
     list: ListDirectory,
 }
 impl DirectoryWatcher {
-    fn new<P: AsRef<Path>>(inotify: &InotifyServiceHandle, path: P) -> Result<Self> {
+    fn new<P: AsRef<Path>>(inotify: &InotifyService, path: P) -> Result<Self> {
         track_assert!(
             path.as_ref().is_dir(),
             ErrorKind::InvalidInput,
@@ -119,10 +120,10 @@ impl DirectoryWatcher {
         );
         let mask = WatchMask::CREATE | WatchMask::DELETE | WatchMask::DELETE_SELF
             | WatchMask::MODIFY | WatchMask::MOVE | WatchMask::MOVE_SELF;
-        let watch = inotify.watch(&path, mask);
+        let watcher = inotify.handle().watch(&path, mask);
         Ok(DirectoryWatcher {
             path: path.as_ref().to_path_buf(),
-            watch,
+            watcher,
             list: ListDirectory::new(path),
         })
     }
@@ -165,13 +166,18 @@ impl Stream for DirectoryWatcher {
                 return Ok(Async::Ready(Some(DirectoryEvent::Updated { path, is_dir })));
             }
         }
-        match track!(self.watch.poll())? {
+        match track!(self.watcher.poll())? {
             Async::NotReady => Ok(Async::NotReady),
             Async::Ready(None) => Ok(Async::Ready(None)),
-            Async::Ready(Some(event)) => match self.handle_inotify_event(event) {
-                None => Ok(Async::Ready(None)),
-                Some(None) => self.poll(),
-                Some(Some(dir_event)) => Ok(Async::Ready(Some(dir_event))),
+            Async::Ready(Some(event)) => if let WatcherEvent::Notified(event) = event {
+                match self.handle_inotify_event(event) {
+                    None => Ok(Async::Ready(None)),
+                    Some(None) => self.poll(),
+                    Some(Some(dir_event)) => Ok(Async::Ready(Some(dir_event))),
+                }
+            } else {
+                // TODO: handle
+                self.poll()
             },
         }
     }

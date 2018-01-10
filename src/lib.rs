@@ -1,4 +1,5 @@
 extern crate fibers;
+extern crate fibers_inotify;
 extern crate fibers_tasque;
 extern crate futures;
 extern crate inotify;
@@ -10,7 +11,6 @@ pub use error::{Error, ErrorKind};
 pub mod watch;
 
 mod error;
-mod inotify_service;
 
 pub type Result<T> = std::result::Result<T, Error>;
 

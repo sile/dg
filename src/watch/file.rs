@@ -133,9 +133,9 @@ impl TextFileSubscriber {
         )?;
         let mut read_size = track!(file.read(&mut buf).map_err(Error::from))?;
         while read_size > 0 {
-            if buf[read_size] < 0x80 {
+            if buf[read_size - 1] < 0x80 {
                 break;
-            } else if (buf[read_size] & 0b0100_0000) != 0 {
+            } else if (buf[read_size - 1] & 0b0100_0000) != 0 {
                 read_size -= 1;
                 break;
             } else {

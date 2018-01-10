@@ -35,7 +35,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 
 [[package]]
 name = "clap"
-version = "2.29.0"
+version = "2.29.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 dependencies = [
  "ansi_term 0.10.2 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -51,8 +51,9 @@ dependencies = [
 name = "dg"
 version = "0.1.0"
 dependencies = [
- "clap 2.29.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "clap 2.29.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "fibers 0.1.8 (registry+https://github.com/rust-lang/crates.io-index)",
+ "fibers_inotify 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "fibers_tasque 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "futures 0.1.17 (registry+https://github.com/rust-lang/crates.io-index)",
  "inotify 0.5.0 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -70,6 +71,20 @@ dependencies = [
  "nbchan 0.1.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "num_cpus 1.8.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "splay_tree 0.2.9 (registry+https://github.com/rust-lang/crates.io-index)",
+]
+
+[[package]]
+name = "fibers_inotify"
+version = "0.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+dependencies = [
+ "fibers 0.1.8 (registry+https://github.com/rust-lang/crates.io-index)",
+ "futures 0.1.17 (registry+https://github.com/rust-lang/crates.io-index)",
+ "inotify 0.5.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "inotify-sys 0.1.2 (registry+https://github.com/rust-lang/crates.io-index)",
+ "libc 0.2.35 (registry+https://github.com/rust-lang/crates.io-index)",
+ "mio 0.6.12 (registry+https://github.com/rust-lang/crates.io-index)",
+ "trackable 0.2.9 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
@@ -396,8 +411,9 @@ dependencies = [
 "checksum bitflags 1.0.1 (registry+https://github.com/rust-lang/crates.io-index)" = "b3c30d3802dfb7281680d6285f2ccdaa8c2d8fee41f93805dba5c4cf50dc23cf"
 "checksum byteorder 1.2.1 (registry+https://github.com/rust-lang/crates.io-index)" = "652805b7e73fada9d85e9a6682a4abd490cb52d96aeecc12e33a0de34dfd0d23"
 "checksum cfg-if 0.1.2 (registry+https://github.com/rust-lang/crates.io-index)" = "d4c819a1287eb618df47cc647173c5c4c66ba19d888a6e50d605672aed3140de"
-"checksum clap 2.29.0 (registry+https://github.com/rust-lang/crates.io-index)" = "110d43e343eb29f4f51c1db31beb879d546db27998577e5715270a54bcf41d3f"
+"checksum clap 2.29.1 (registry+https://github.com/rust-lang/crates.io-index)" = "8f4a2b3bb7ef3c672d7c13d15613211d5a6976b6892c598b0fcb5d40765f19c2"
 "checksum fibers 0.1.8 (registry+https://github.com/rust-lang/crates.io-index)" = "496e9c6923ed6fbf159ae90311192154fd40236d03d02c0ad32ca4100dec07bc"
+"checksum fibers_inotify 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)" = "dae419541e99e0943787eb933d17d17479769b4cbb826ebb2038b5d6e9c9f156"
 "checksum fibers_tasque 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)" = "7b266bfa9f556320d13713bcdce8e0cb17ee2a30d859506e010cb68f2c87e5fc"
 "checksum fuchsia-zircon 0.3.3 (registry+https://github.com/rust-lang/crates.io-index)" = "2e9763c69ebaae630ba35f74888db465e49e259ba1bc0eda7d06f4a067615d82"
 "checksum fuchsia-zircon-sys 0.3.3 (registry+https://github.com/rust-lang/crates.io-index)" = "3dcaa9ae7725d12cdb85b3ad99a434db70b468c09ded17e012d86b5c1010f7a7"

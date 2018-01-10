@@ -27,7 +27,7 @@ fn subcommand_watch() -> App<'static, 'static> {
 fn handle_watch(matches: &ArgMatches) {
     let dir = matches.value_of("DIR").unwrap();
     let executor = ThreadPoolExecutor::new().unwrap();
-    let mut watcher = track_try_unwrap!(watch::fs::FileSystemWatcher::new(executor.handle()));
+    let mut watcher = watch::fs::FileSystemWatcher::new(executor.handle());
     track_try_unwrap!(watcher.watch(dir));
     let handle = executor.handle();
     executor.spawn(
