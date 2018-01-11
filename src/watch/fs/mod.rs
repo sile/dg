@@ -4,6 +4,7 @@ use fibers::{BoxSpawn, Spawn};
 use fibers::sync::mpsc;
 use fibers_inotify::InotifyService;
 use futures::{Async, Future, Poll, Stream};
+use slog::Logger;
 
 use {Error, Result};
 use watch::file::{FileEvent, WatchedFile};
@@ -13,6 +14,7 @@ mod directory;
 
 #[derive(Debug)]
 pub struct FileSystemWatcher {
+    logger: Logger,
     spawner: BoxSpawn,
     inotify_service: InotifyService,
     dir_event_rx: mpsc::Receiver<DirectoryEvent>,
@@ -20,13 +22,14 @@ pub struct FileSystemWatcher {
     watched_files: HashMap<PathBuf, mpsc::Sender<FileEvent>>,
 }
 impl FileSystemWatcher {
-    pub fn new<S>(spawner: S) -> Self
+    pub fn new<S>(logger: Logger, spawner: S) -> Self
     where
         S: Spawn + Send + 'static,
     {
         let inotify_service = InotifyService::new();
         let (dir_event_tx, dir_event_rx) = mpsc::channel();
         FileSystemWatcher {
+            logger,
             spawner: spawner.boxed(),
             inotify_service,
             dir_event_rx,
@@ -36,16 +39,27 @@ impl FileSystemWatcher {
     }
     pub fn watch<P: AsRef<Path>>(&mut self, root_dir: P) -> Result<()> {
         let root_dir = root_dir.as_ref().to_path_buf();
-        let watcher = track!(DirectoryWatcher::new(&self.inotify_service, &root_dir))?;
-        println!("[DEBUG] watch: {:?}", root_dir);
+
+        let logger = self.logger.new(o!("dir" => format!("{:?}", root_dir)));
+        info!(logger, "Starts watching");
+
+        let watcher = track!(DirectoryWatcher::new(
+            logger.clone(),
+            &self.inotify_service,
+            &root_dir
+        ))?;
 
         let tx0 = self.dir_event_tx.clone();
         let tx1 = tx0.clone();
         self.spawner.spawn(
             watcher
                 .for_each(move |event| tx0.send(event).map_err(Error::from))
-                .then(move |r| {
-                    println!("TODO: result: {:?}", r);
+                .then(move |result| {
+                    if let Err(e) = result {
+                        error!(logger, "Finished watching: \n{}", e);
+                    } else {
+                        info!(logger, "Finished watching");
+                    }
                     let _ = tx1.send(DirectoryEvent::Removed {
                         path: root_dir,
                         is_dir: true,
