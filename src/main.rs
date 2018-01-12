@@ -26,6 +26,7 @@ fn main() {
                 .default_value("info"),
         )
         .subcommand(subcommand_watch())
+        .subcommand(subcommand_agent())
         .get_matches();
 
     let log_level = match matches.value_of("LOG_LEVEL").unwrap() {
@@ -45,6 +46,8 @@ fn main() {
 
     if let Some(matches) = matches.subcommand_matches("watch") {
         handle_watch(matches, logger);
+    } else if let Some(matches) = matches.subcommand_matches("agent") {
+        handle_agent(matches, logger);
     } else {
         println!("Usage: {}", matches.usage());
         std::process::exit(1);
@@ -81,4 +84,12 @@ fn handle_watch(matches: &ArgMatches, logger: Logger) {
             .then(|_| Ok(())),
     );
     executor.run().unwrap();
+}
+
+fn subcommand_agent() -> App<'static, 'static> {
+    SubCommand::with_name("agent").arg(Arg::with_name("DIR").index(1).required(true))
+}
+
+fn handle_agent(matches: &ArgMatches, logger: Logger) {
+    unimplemented!()
 }

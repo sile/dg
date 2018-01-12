@@ -2,6 +2,7 @@ extern crate fibers;
 extern crate fibers_inotify;
 extern crate fibers_tasque;
 extern crate futures;
+extern crate scalable_bloom_filter;
 #[macro_use]
 extern crate slog;
 #[macro_use]
