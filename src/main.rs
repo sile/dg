@@ -2,6 +2,7 @@ extern crate clap;
 extern crate dg;
 extern crate fibers;
 extern crate futures;
+#[macro_use]
 extern crate slog;
 extern crate sloggers;
 #[macro_use]
@@ -57,28 +58,24 @@ fn subcommand_watch() -> App<'static, 'static> {
 fn handle_watch(matches: &ArgMatches, logger: Logger) {
     let dir = matches.value_of("DIR").unwrap();
     let executor = ThreadPoolExecutor::new().unwrap();
-    let mut watcher = watch::fs::FileSystemWatcher::new(logger, executor.handle());
+    let mut watcher = watch::fs::FileSystemWatcher::new(logger.clone(), executor.handle());
     track_try_unwrap!(watcher.watch(dir));
     let handle = executor.handle();
     executor.spawn(
         watcher
-            .for_each(move |mut file| {
-                let path = file.path();
-                let path2 = file.path();
-                println!("WATCH: {:?}", file.path());
-                let subscriber = file.subscribe();
-                handle.spawn(file.then(|_| Ok(())));
-                handle.spawn(
-                    subscriber
-                        .for_each(move |chunk| {
-                            println!("{:?}: {:?}", path, chunk);
-                            Ok(())
-                        })
-                        .then(move |r| {
-                            println!("UNWATCH: {:?} ({:?})", path2, r.map_err(|e| e.to_string()));
-                            Ok(())
-                        }),
-                );
+            .for_each(move |file| {
+                let logger = logger.new(o!("file" => format!("{:?}", file.path())));
+                let error_logger = logger.clone();
+                handle.spawn(file.for_each(move |content| {
+                    info!(
+                        logger,
+                        "Updated: position={}, bytes={}, eof={}",
+                        content.offset,
+                        content.data.len(),
+                        content.eof
+                    );
+                    Ok(())
+                }).map_err(move |e| error!(error_logger, "{}", e)));
                 Ok(())
             })
             .then(|_| Ok(())),
