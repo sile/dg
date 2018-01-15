@@ -9,7 +9,7 @@ extern crate sloggers;
 extern crate trackable;
 
 use clap::{App, Arg, ArgMatches, SubCommand};
-use dg::watch;
+use dg::{agent, watch};
 use fibers::{Executor, Spawn, ThreadPoolExecutor};
 use futures::{Future, Stream};
 use slog::Logger;
@@ -91,5 +91,12 @@ fn subcommand_agent() -> App<'static, 'static> {
 }
 
 fn handle_agent(matches: &ArgMatches, logger: Logger) {
-    unimplemented!()
+    let dir = matches.value_of("DIR").unwrap();
+    let executor = ThreadPoolExecutor::new().unwrap();
+    let mut watcher = watch::fs::FileSystemWatcher::new(logger.clone(), executor.handle());
+    track_try_unwrap!(watcher.watch(dir));
+
+    let agent = agent::Agent::new(logger, executor.handle(), watcher);
+    executor.spawn(agent.map_err(|e| panic!("{}", e)));
+    executor.run().unwrap();
 }

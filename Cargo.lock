@@ -66,7 +66,7 @@ name = "dg"
 version = "0.1.0"
 dependencies = [
  "clap 2.29.1 (registry+https://github.com/rust-lang/crates.io-index)",
- "fibers 0.1.8 (registry+https://github.com/rust-lang/crates.io-index)",
+ "fibers 0.1.9 (registry+https://github.com/rust-lang/crates.io-index)",
  "fibers_inotify 0.1.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "fibers_tasque 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "futures 0.1.17 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -78,7 +78,7 @@ dependencies = [
 
 [[package]]
 name = "fibers"
-version = "0.1.8"
+version = "0.1.9"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 dependencies = [
  "futures 0.1.17 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -94,7 +94,7 @@ name = "fibers_inotify"
 version = "0.1.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 dependencies = [
- "fibers 0.1.8 (registry+https://github.com/rust-lang/crates.io-index)",
+ "fibers 0.1.9 (registry+https://github.com/rust-lang/crates.io-index)",
  "futures 0.1.17 (registry+https://github.com/rust-lang/crates.io-index)",
  "inotify 0.5.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "inotify-sys 0.1.2 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -108,7 +108,7 @@ name = "fibers_tasque"
 version = "0.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 dependencies = [
- "fibers 0.1.8 (registry+https://github.com/rust-lang/crates.io-index)",
+ "fibers 0.1.9 (registry+https://github.com/rust-lang/crates.io-index)",
  "futures 0.1.17 (registry+https://github.com/rust-lang/crates.io-index)",
  "lazy_static 1.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "tasque 0.1.3 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -329,7 +329,7 @@ dependencies = [
 
 [[package]]
 name = "prometrics"
-version = "0.1.4"
+version = "0.1.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 dependencies = [
  "atomic_immut 0.1.3 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -522,7 +522,7 @@ version = "0.1.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 dependencies = [
  "num_cpus 1.8.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "prometrics 0.1.4 (registry+https://github.com/rust-lang/crates.io-index)",
+ "prometrics 0.1.7 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
@@ -652,7 +652,7 @@ dependencies = [
 "checksum chrono 0.4.0 (registry+https://github.com/rust-lang/crates.io-index)" = "7c20ebe0b2b08b0aeddba49c609fe7957ba2e33449882cb186a180bc60682fa9"
 "checksum clap 2.29.1 (registry+https://github.com/rust-lang/crates.io-index)" = "8f4a2b3bb7ef3c672d7c13d15613211d5a6976b6892c598b0fcb5d40765f19c2"
 "checksum crossbeam 0.2.12 (registry+https://github.com/rust-lang/crates.io-index)" = "bd66663db5a988098a89599d4857919b3acf7f61402e61365acfd3919857b9be"
-"checksum fibers 0.1.8 (registry+https://github.com/rust-lang/crates.io-index)" = "496e9c6923ed6fbf159ae90311192154fd40236d03d02c0ad32ca4100dec07bc"
+"checksum fibers 0.1.9 (registry+https://github.com/rust-lang/crates.io-index)" = "43583d60df7cd4bb49b6a01d91db899b088100ce081be5f2a1fc70a348b530be"
 "checksum fibers_inotify 0.1.1 (registry+https://github.com/rust-lang/crates.io-index)" = "772c0265b86760dcc41660e9bb62d94349f1f876075c0231b529e258fad06da6"
 "checksum fibers_tasque 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)" = "7b266bfa9f556320d13713bcdce8e0cb17ee2a30d859506e010cb68f2c87e5fc"
 "checksum fuchsia-zircon 0.3.3 (registry+https://github.com/rust-lang/crates.io-index)" = "2e9763c69ebaae630ba35f74888db465e49e259ba1bc0eda7d06f4a067615d82"
@@ -681,7 +681,7 @@ dependencies = [
 "checksum num-traits 0.1.41 (registry+https://github.com/rust-lang/crates.io-index)" = "cacfcab5eb48250ee7d0c7896b51a2c5eec99c1feea5f32025635f5ae4b00070"
 "checksum num_cpus 1.8.0 (registry+https://github.com/rust-lang/crates.io-index)" = "c51a3322e4bca9d212ad9a158a02abc6934d005490c054a2778df73a70aa0a30"
 "checksum procinfo 0.4.2 (registry+https://github.com/rust-lang/crates.io-index)" = "6ab1427f3d2635891f842892dda177883dca0639e05fe66796a62c9d2f23b49c"
-"checksum prometrics 0.1.4 (registry+https://github.com/rust-lang/crates.io-index)" = "8efc9b6b85535917a5e36ab2f7ddee67084db677c3eff08059a3e5e001582cbb"
+"checksum prometrics 0.1.7 (registry+https://github.com/rust-lang/crates.io-index)" = "146d8d8f9d1477d2b0164be161cb2d6263655548964006f24bba0e051c1e9081"
 "checksum quote 0.3.15 (registry+https://github.com/rust-lang/crates.io-index)" = "7a6e920b65c65f10b2ae65c831a81a073a89edd28c7cce89475bff467ab4167a"
 "checksum redox_syscall 0.1.37 (registry+https://github.com/rust-lang/crates.io-index)" = "0d92eecebad22b767915e4d529f89f28ee96dbbf5a4810d2b844373f136417fd"
 "checksum redox_termios 0.1.1 (registry+https://github.com/rust-lang/crates.io-index)" = "7e891cfe48e9100a70a3b6eb652fef28920c117d366339687bd5576160db0f76"

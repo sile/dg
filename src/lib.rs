@@ -10,6 +10,7 @@ extern crate trackable;
 
 pub use error::{Error, ErrorKind};
 
+pub mod agent;
 pub mod watch;
 
 mod error;
