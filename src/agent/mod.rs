@@ -3,7 +3,8 @@ use std::path::PathBuf;
 use fibers::{BoxSpawn, Spawn};
 use fibers::sync::mpsc;
 use futures::{Async, Future, Poll, Stream};
-use scalable_bloom_filter::ScalableBloomFilter;
+use rand::StdRng;
+use scalable_cuckoo_filter::{DefaultHasher, ScalableCuckooFilter, ScalableCuckooFilterBuilder};
 use slog::Logger;
 
 use Error;
@@ -47,12 +48,12 @@ impl Agent {
         if let Some(file) = self.files.get_mut(&path) {
             let offset = content.offset;
             let eof = content.eof;
-            file.update_bloom_filter(content);
+            file.update_cuckoo_filter(content);
             info!(
                 self.logger,
-                "Bloom filter updated: path={:?}, bytes={}, offset={}, eof={}",
+                "Cuckoo filter updated: path={:?}, bytes={}, offset={}, eof={}",
                 path,
-                file.bloom_filter.allocated_bits() / 8,
+                file.cuckoo_filter.bits() / 8,
                 offset,
                 eof
             );
@@ -105,17 +106,22 @@ enum FileEvent {
 
 #[derive(Debug)]
 struct FileState {
-    bloom_filter: ScalableBloomFilter<[u8]>,
+    cuckoo_filter: ScalableCuckooFilter<[u8], DefaultHasher, StdRng>,
     last: [u8; 8],
 }
 impl FileState {
     fn new() -> Self {
+        let cuckoo_filter = ScalableCuckooFilterBuilder::new()
+            .initial_capacity(100_000)
+            .false_positive_probability(0.001)
+            .rng(StdRng::new().unwrap())
+            .finish();
         FileState {
-            bloom_filter: ScalableBloomFilter::new(100_000, 0.001),
+            cuckoo_filter,
             last: [0; 8],
         }
     }
-    fn update_bloom_filter(&mut self, content: FileContent) {
+    fn update_cuckoo_filter(&mut self, content: FileContent) {
         // TODO: optimize
         let bytes = self.last
             .iter()
@@ -123,10 +129,10 @@ impl FileState {
             .chain(content.data.into_iter())
             .collect::<Vec<_>>();
         for w in bytes.windows(4) {
-            self.bloom_filter.insert(w);
+            self.cuckoo_filter.insert(w);
         }
         for w in bytes.windows(8) {
-            self.bloom_filter.insert(w);
+            self.cuckoo_filter.insert(w);
         }
 
         for i in 0..self.last.len() {
