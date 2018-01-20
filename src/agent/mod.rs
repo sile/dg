@@ -8,6 +8,7 @@ use scalable_cuckoo_filter::{DefaultHasher, ScalableCuckooFilter, ScalableCuckoo
 use slog::Logger;
 
 use Error;
+use tokenize::WordTokenizer;
 use watch::fs::{FileContent, FileSystemWatcher};
 
 #[derive(Debug)]
@@ -51,11 +52,14 @@ impl Agent {
             file.update_cuckoo_filter(content);
             info!(
                 self.logger,
-                "Cuckoo filter updated: path={:?}, bytes={}, offset={}, eof={}",
+                "Cuckoo filter updated: path={:?}, offset={}, eof={}, filter=[bytes:{}, items:{}, cap:{}, bin:{}]",
                 path,
-                file.cuckoo_filter.bits() / 8,
                 offset,
-                eof
+                eof,
+                file.cuckoo_filter.bits() / 8,
+                file.cuckoo_filter.len(),
+                file.cuckoo_filter.capacity(),
+                file.is_binary
             );
         }
     }
@@ -106,8 +110,9 @@ enum FileEvent {
 
 #[derive(Debug)]
 struct FileState {
-    cuckoo_filter: ScalableCuckooFilter<[u8], DefaultHasher, StdRng>,
-    last: [u8; 8],
+    cuckoo_filter: ScalableCuckooFilter<str, DefaultHasher, StdRng>,
+    buf: Vec<u8>,
+    is_binary: bool,
 }
 impl FileState {
     fn new() -> Self {
@@ -118,26 +123,34 @@ impl FileState {
             .finish();
         FileState {
             cuckoo_filter,
-            last: [0; 8],
+            buf: Vec::new(),
+            is_binary: false,
         }
     }
     fn update_cuckoo_filter(&mut self, content: FileContent) {
-        // TODO: optimize
-        let bytes = self.last
-            .iter()
-            .cloned()
-            .chain(content.data.into_iter())
-            .collect::<Vec<_>>();
-        for w in bytes.windows(4) {
-            self.cuckoo_filter.insert(w);
-        }
-        for w in bytes.windows(8) {
-            self.cuckoo_filter.insert(w);
+        if self.is_binary {
+            return;
         }
 
-        for i in 0..self.last.len() {
-            let j = bytes.len() - self.last.len() + i;
-            self.last[i] = bytes[j];
+        self.buf.extend(content.data);
+        let mut end = 0;
+        for w in WordTokenizer::new(&self.buf) {
+            match w {
+                Err(_) => {
+                    self.is_binary = true;
+                    end = self.buf.len();
+                    break;
+                }
+                Ok((start, w)) => {
+                    self.cuckoo_filter.insert(w);
+                    end = start + w.len();
+                }
+            }
+        }
+        if self.is_binary {
+            self.buf.clear()
+        } else {
+            for _ in self.buf.drain(0..end) {}
         }
     }
 }

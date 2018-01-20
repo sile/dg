@@ -35,6 +35,11 @@ impl From<RecvError> for Error {
         ErrorKind::Other.cause(f).into()
     }
 }
+impl From<std::str::Utf8Error> for Error {
+    fn from(f: std::str::Utf8Error) -> Self {
+        ErrorKind::InvalidInput.cause(f).into()
+    }
+}
 impl<T: Send + Sync + 'static> From<SendError<T>> for Error {
     fn from(f: SendError<T>) -> Self {
         ErrorKind::Other.cause(f).into()
