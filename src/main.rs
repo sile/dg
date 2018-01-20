@@ -1,6 +1,7 @@
 extern crate clap;
 extern crate dg;
 extern crate fibers;
+extern crate fibers_tasque;
 extern crate futures;
 #[macro_use]
 extern crate slog;
@@ -10,7 +11,7 @@ extern crate trackable;
 
 use clap::{App, Arg, ArgMatches, SubCommand};
 use dg::{agent, watch};
-use fibers::{Executor, Spawn, ThreadPoolExecutor};
+use fibers::{Executor, InPlaceExecutor, Spawn};
 use futures::{Future, Stream};
 use slog::Logger;
 use sloggers::Build;
@@ -60,7 +61,7 @@ fn subcommand_watch() -> App<'static, 'static> {
 
 fn handle_watch(matches: &ArgMatches, logger: Logger) {
     let dir = matches.value_of("DIR").unwrap();
-    let executor = ThreadPoolExecutor::new().unwrap();
+    let executor = InPlaceExecutor::new().unwrap();
     let mut watcher = watch::fs::FileSystemWatcher::new(logger.clone(), executor.handle());
     track_try_unwrap!(watcher.watch(dir));
     let handle = executor.handle();
@@ -92,10 +93,11 @@ fn subcommand_agent() -> App<'static, 'static> {
 
 fn handle_agent(matches: &ArgMatches, logger: Logger) {
     let dir = matches.value_of("DIR").unwrap();
-    let executor = ThreadPoolExecutor::new().unwrap();
+    let executor = InPlaceExecutor::new().unwrap();
     let mut watcher = watch::fs::FileSystemWatcher::new(logger.clone(), executor.handle());
     track_try_unwrap!(watcher.watch(dir));
 
+    fibers_tasque::DefaultIoTaskQueue.get().set_worker_count(1);
     let agent = agent::Agent::new(logger, executor.handle(), watcher);
     executor.spawn(agent.map_err(|e| panic!("{}", e)));
     executor.run().unwrap();
