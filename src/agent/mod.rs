@@ -1,15 +1,15 @@
-use std::collections::HashMap;
-use std::path::PathBuf;
-use fibers::{BoxSpawn, Spawn};
 use fibers::sync::mpsc;
+use fibers::{BoxSpawn, Spawn};
 use futures::{Async, Future, Poll, Stream};
-use rand::StdRng;
+use rand::{SeedableRng, StdRng};
 use scalable_cuckoo_filter::{DefaultHasher, ScalableCuckooFilter, ScalableCuckooFilterBuilder};
 use slog::Logger;
+use std::collections::HashMap;
+use std::path::PathBuf;
 
-use Error;
 use tokenize::WordTokenizer;
 use watch::fs::{FileContent, FileSystemWatcher};
+use Error;
 
 #[derive(Debug)]
 pub struct Agent {
@@ -119,7 +119,7 @@ impl FileState {
         let cuckoo_filter = ScalableCuckooFilterBuilder::new()
             .initial_capacity(100_000)
             .false_positive_probability(0.001)
-            .rng(StdRng::new().unwrap())
+            .rng(StdRng::from_seed(Default::default()))
             .finish();
         FileState {
             cuckoo_filter,
