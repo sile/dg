@@ -1,3 +1,4 @@
+#[macro_use]
 extern crate clap;
 extern crate dg;
 extern crate fibers;
@@ -14,11 +15,11 @@ use dg::{agent, watch};
 use fibers::{Executor, InPlaceExecutor, Spawn};
 use futures::{Future, Stream};
 use slog::Logger;
-use sloggers::Build;
 use sloggers::types::Severity;
+use sloggers::Build;
 
 fn main() {
-    let matches = App::new("dg")
+    let matches = app_from_crate!()
         .arg(
             Arg::with_name("LOG_LEVEL")
                 .long("log-level")
