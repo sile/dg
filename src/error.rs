@@ -1,9 +1,9 @@
-use std;
-use std::io;
-use std::sync::mpsc::{RecvError, SendError};
 use fibers::sync::oneshot::MonitorError;
 use fibers_inotify;
 use fibers_tasque;
+use std;
+use std::io;
+use std::sync::mpsc::{RecvError, SendError};
 use trackable::error::TrackableError;
 use trackable::error::{ErrorKind as TrackableErrorKind, ErrorKindExt};
 

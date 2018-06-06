@@ -1,11 +1,11 @@
+use fibers_inotify::{EventMask, InotifyEvent, InotifyService, WatchMask, Watcher, WatcherEvent};
+use fibers_tasque::{AsyncCall, DefaultIoTaskQueue, TaskQueueExt};
+use futures::future::Fuse;
+use futures::{Async, Future, Poll, Stream};
+use slog::Logger;
 use std;
 use std::fs::DirEntry;
 use std::path::{Path, PathBuf};
-use fibers_inotify::{EventMask, InotifyEvent, InotifyService, WatchMask, Watcher, WatcherEvent};
-use fibers_tasque::{AsyncCall, DefaultIoTaskQueue, TaskQueueExt};
-use futures::{Async, Future, Poll, Stream};
-use futures::future::Fuse;
-use slog::Logger;
 
 use {Error, ErrorKind, Result};
 

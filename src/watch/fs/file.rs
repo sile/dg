@@ -1,12 +1,12 @@
+use fibers::sync::mpsc;
+use fibers::time::timer::{self, Timeout};
+use fibers_tasque::{AsyncCall, DefaultIoTaskQueue, TaskQueueExt};
+use futures::future::Fuse;
+use futures::{Async, Future, Poll, Stream};
 use std::fs::File;
 use std::io::{Read, Seek, SeekFrom};
 use std::path::{Path, PathBuf};
 use std::time::Duration;
-use fibers::sync::mpsc;
-use fibers::time::timer::{self, Timeout};
-use fibers_tasque::{AsyncCall, DefaultIoTaskQueue, TaskQueueExt};
-use futures::{Async, Future, Poll, Stream};
-use futures::future::Fuse;
 
 use {Error, Result};
 

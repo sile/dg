@@ -1,14 +1,14 @@
-use std::collections::HashMap;
-use std::path::{Path, PathBuf};
-use fibers::{BoxSpawn, Spawn};
 use fibers::sync::mpsc;
+use fibers::{BoxSpawn, Spawn};
 use fibers_inotify::InotifyService;
 use futures::{Async, Future, Poll, Stream};
 use slog::Logger;
+use std::collections::HashMap;
+use std::path::{Path, PathBuf};
 
-use {Error, Result};
-use watch::fs::{FileUpdated, FileWatcher};
 use watch::fs::{DirectoryEvent, DirectoryWatcher};
+use watch::fs::{FileUpdated, FileWatcher};
+use {Error, Result};
 
 #[derive(Debug)]
 pub struct FileSystemWatcher {
