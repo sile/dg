@@ -3,7 +3,6 @@ use fibers::{BoxSpawn, Spawn};
 use futures::{Async, Future, Poll, Stream};
 use rand::{SeedableRng, StdRng};
 use scalable_cuckoo_filter::{DefaultHasher, ScalableCuckooFilter, ScalableCuckooFilterBuilder};
-use slog::Logger;
 use std::collections::HashMap;
 use std::path::PathBuf;
 
@@ -13,7 +12,6 @@ use Error;
 
 #[derive(Debug)]
 pub struct Agent {
-    logger: Logger,
     spawner: BoxSpawn,
     fs_watcher: FileSystemWatcher,
     files: HashMap<PathBuf, FileState>,
@@ -21,14 +19,12 @@ pub struct Agent {
     file_event_rx: mpsc::Receiver<FileEvent>,
 }
 impl Agent {
-    pub fn new<S>(logger: Logger, spawner: S, fs_watcher: FileSystemWatcher) -> Self
+    pub fn new<S>(spawner: S, fs_watcher: FileSystemWatcher) -> Self
     where
         S: Spawn + Send + 'static,
     {
-        info!(logger, "Starts agent");
         let (file_event_tx, file_event_rx) = mpsc::channel();
         Agent {
-            logger,
             spawner: spawner.boxed(),
             fs_watcher,
             files: HashMap::new(),
@@ -47,20 +43,7 @@ impl Agent {
     }
     fn handle_file_updated(&mut self, path: PathBuf, content: FileContent) {
         if let Some(file) = self.files.get_mut(&path) {
-            let offset = content.offset;
-            let eof = content.eof;
             file.update_cuckoo_filter(content);
-            info!(
-                self.logger,
-                "Cuckoo filter updated: path={:?}, offset={}, eof={}, filter=[bytes:{}, items:{}, cap:{}, bin:{}]",
-                path,
-                offset,
-                eof,
-                file.cuckoo_filter.bits() / 8,
-                file.cuckoo_filter.len(),
-                file.cuckoo_filter.capacity(),
-                file.is_binary
-            );
         }
     }
 }
@@ -69,9 +52,6 @@ impl Future for Agent {
     type Error = Error;
     fn poll(&mut self) -> Poll<Self::Item, Self::Error> {
         while let Async::Ready(Some(file_watcher)) = track!(self.fs_watcher.poll())? {
-            let logger = self.logger
-                .new(o!("path" => format!("{:?}", file_watcher.path())));
-            info!(logger, "Starts file watching",);
             self.files
                 .insert(file_watcher.path().to_path_buf(), FileState::new());
 
@@ -88,8 +68,7 @@ impl Future for Agent {
                         });
                         track!(result.map_err(Error::from))
                     })
-                    .then(move |result| {
-                        info!(logger, "Stops file watching: succeeded={}", result.is_ok());
+                    .then(move |_result| {
                         let _ = file_event_tx1.send(FileEvent::Deleted { path: path1 });
                         Ok(())
                     }),

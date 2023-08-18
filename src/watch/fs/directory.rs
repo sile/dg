@@ -2,7 +2,6 @@ use fibers_inotify::{EventMask, InotifyEvent, InotifyService, WatchMask, Watcher
 use fibers_tasque::{AsyncCall, DefaultIoTaskQueue, TaskQueueExt};
 use futures::future::Fuse;
 use futures::{Async, Future, Poll, Stream};
-use slog::Logger;
 use std;
 use std::fs::DirEntry;
 use std::path::{Path, PathBuf};
@@ -11,25 +10,27 @@ use {Error, ErrorKind, Result};
 
 #[derive(Debug)]
 pub struct DirectoryWatcher {
-    logger: Logger,
     path: PathBuf,
     watcher: Watcher,
     list_dir: Option<ListDirectory>,
 }
 impl DirectoryWatcher {
-    pub fn new<P: AsRef<Path>>(logger: Logger, inotify: &InotifyService, path: P) -> Result<Self> {
+    pub fn new<P: AsRef<Path>>(inotify: &InotifyService, path: P) -> Result<Self> {
         track_assert!(
             path.as_ref().is_dir(),
             ErrorKind::InvalidInput,
             "not a directory: {:?}",
             path.as_ref()
         );
-        let mask = WatchMask::CREATE | WatchMask::DELETE | WatchMask::DELETE_SELF
-            | WatchMask::MODIFY | WatchMask::MOVE | WatchMask::MOVE_SELF
+        let mask = WatchMask::CREATE
+            | WatchMask::DELETE
+            | WatchMask::DELETE_SELF
+            | WatchMask::MODIFY
+            | WatchMask::MOVE
+            | WatchMask::MOVE_SELF
             | WatchMask::EXCL_UNLINK;
         let watcher = inotify.handle().watch(&path, mask);
         Ok(DirectoryWatcher {
-            logger,
             path: path.as_ref().to_path_buf(),
             watcher,
             list_dir: None,
@@ -64,21 +65,16 @@ impl DirectoryWatcher {
                         self.handle_inotify_event(inotify_event)
                     }
                     WatcherEvent::StartWatching => {
-                        self.list_dir =
-                            Some(ListDirectory::new(self.logger.clone(), self.path.clone()));
+                        self.list_dir = Some(ListDirectory::new(self.path.clone()));
                         Action::Continue
                     }
-                    WatcherEvent::RestartWatching => {
-                        info!(self.logger, "Stops this watching because someone started watching the same directory");
-                        Action::Terminate
-                    }
+                    WatcherEvent::RestartWatching => Action::Terminate,
                 };
                 Ok(action)
             }
         }
     }
     fn handle_inotify_event(&mut self, mut event: InotifyEvent) -> Action {
-        debug!(self.logger, "Inotify event: {:?}", event);
         if event
             .mask
             .intersects(EventMask::DELETE_SELF | EventMask::MOVE_SELF | EventMask::IGNORED)
@@ -143,20 +139,13 @@ struct ListDirectory {
     entries: Vec<DirEntry>,
 }
 impl ListDirectory {
-    fn new(logger: Logger, dir: PathBuf) -> Self {
-        info!(logger, "Starts listing directory");
+    fn new(dir: PathBuf) -> Self {
         let future = DefaultIoTaskQueue.async_call(move || {
             let mut entries = Vec::new();
             for entry in track!(std::fs::read_dir(dir).map_err(Error::from))? {
                 let entry = track!(entry.map_err(Error::from))?;
-                debug!(logger, "Directory entry: {:?}", entry);
                 entries.push(entry);
             }
-            info!(
-                logger,
-                "{} entries are found in the directory",
-                entries.len()
-            );
             Ok(entries)
         });
         ListDirectory {

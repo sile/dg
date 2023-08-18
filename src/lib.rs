@@ -5,8 +5,6 @@ extern crate futures;
 extern crate rand;
 extern crate scalable_cuckoo_filter;
 #[macro_use]
-extern crate slog;
-#[macro_use]
 extern crate trackable;
 
 pub use error::{Error, ErrorKind};
