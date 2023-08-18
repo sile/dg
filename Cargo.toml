@@ -4,7 +4,7 @@ version = "0.1.0"
 authors = ["Takeru Ohta <phjgt308@gmail.com>"]
 
 [dependencies]
-clap = "2"
+clap = { version = "4", features = ["derive"] }
 fibers = "0.1"
 fibers_inotify = "0.1"
 fibers_tasque = "0.1"
